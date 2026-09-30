@@ -7,7 +7,6 @@
 # SKU Search Free — умный поиск дублей номенклатуры для 1С
 
 [![Release](https://img.shields.io/github/v/release/kadrjob/sku-free)](https://github.com/kadrjob/sku-free/releases/latest)
-[![Сайт](https://img.shields.io/badge/сайт-sku--search.online-blue)](https://sku-search.online)
 [![Лицензия](https://img.shields.io/github/license/kadrjob/sku-free)](LICENSE)
 
 SKU Search — это поисковый микросервис рядом с 1С, который за доли секунды находит похожие товары и не даёт операторам создавать дубли номенклатуры.
@@ -23,9 +22,12 @@ SKU Search — это поисковый микросервис рядом с 1�
 - Один бинарник. Без Java, Python, Docker, GPU.
 - Работает на слабом железе.
 
-**👉 Скачать последний релиз:** [github.com/kadrjob/sku-free/releases/latest](https://github.com/kadrjob/sku-free/releases/latest)  
-**👉 PRO-версия:** [sku-search.online/purchase](https://sku-search.online/purchase/)  
-**👉 Сайт и документация:** [sku-search.online](https://sku-search.online)
+**👉 Скачать последний релиз:** [github.com/kadrjob/sku-free/releases/latest](https://github.com/kadrjob/sku-free/releases/latest)
+
+Архивы релиза `v0.2.9`:
+
+- `sku-search-free-0.2.9.zip` — стандартная Free-версия.
+- `sku-search-free-infostart-0.2.9.zip` — сборка с Infostart-специфичными настройками интерфейса.
 
 ---
 
@@ -41,6 +43,102 @@ SKU Search — это поисковый микросервис рядом с 1�
 Результат: дубли номенклатуры, разъезжаются остатки, путаются цены.
 
 SKU Search решает это: строит поисковый индекс и находит похожие товары даже с ошибками и сокращениями.
+
+---
+
+## Как это работает на практике
+
+### Поиск с опечатками
+
+Оператор вводит «болт м16 цинк», а в базе лежит «Болт М16х60 оцинк. ГОСТ 7798-70». SKU Search находит товар и возвращает `score` (степень совпадения) и `matched_by` (по чему нашлось):
+
+```json
+{
+  "items": [
+    { "name": "болт м16 цинк" }
+  ]
+}
+```
+
+```json
+{
+  "original": {
+    "name_out": "Болт М16х60 оцинк. ГОСТ 7798-70",
+    "id_out": "DEMO-00002",
+    "art": "ART-000002",
+    "score": 0.91,
+    "matched_by": "fuzzy_text"
+  }
+}
+```
+
+### Транслитерация и неправильная раскладка
+
+Ошиблись раскладкой или ввели транслитом — сервис всё равно поймёт. Например, для товара «Домик в деревне» находятся запросы:
+
+- `ljvbr d lthtdyt` — кириллица, ошибочно набранная на латинской раскладке;
+- `domik v derevne` — обычная латинская транслитерация.
+
+```json
+{
+  "items": [
+    { "name": "ljvbr d lthtdyt" }
+  ]
+}
+```
+
+### Артикул внутри наименования
+
+Если оператор ввёл `ART-000002 болт м16`, сервис извлекает артикул из `name` и находит точное совпадение:
+
+```json
+{
+  "original": {
+    "name_out": "Болт М16х60 оцинк. ГОСТ 7798-70",
+    "id_out": "DEMO-00002",
+    "art": "ART-000002",
+    "score": 1.0,
+    "matched_by": "exact_art"
+  }
+}
+```
+
+То же самое работает для `barcode`, `code`, `id`, `type`, `ref` — exact-поиск мгновенный.
+
+### Поля `ref` и `type`
+
+- **`ref`** — сохраняет сериализованную ссылку 1С (`ЗначениеВСтрокуВнутр()`), чтобы сразу вернуть живой объект в 1С.
+- **`type`** — фильтрует поиск по типу объекта (например, только номенклатура, только контрагенты).
+
+```json
+{
+  "items": [
+    { "name": "болт", "type": "Справочник.Номенклатура" }
+  ]
+}
+```
+
+### Любые реквизиты
+
+Передавайте бренд, цвет, размер, материал, ГОСТ, поставщика — что угодно. Реквизиты индексируются и ищутся точно, с учётом стемминга слов.
+
+```json
+{
+  "items": [
+    {
+      "name": "телевизор",
+      "brand": "Samsung",
+      "diagonal": "55"
+    }
+  ]
+}
+```
+
+Можно искать и без названия: `{"name": "", "brand": "Samsung", "diagonal": "55"}`.
+
+### Регистрозависимый поиск
+
+В 1С сравнение строк по умолчанию регистронезависимое. Для артикулов, серийных номеров, марок Честного ЗНАКО это может приводить к ложным совпадениям. SKU Search умеет искать с учётом регистра по полям `id`, `art`, `barcode`, `code` и другим (настраивается в `config.toml`).
 
 ---
 
@@ -79,7 +177,7 @@ SKU Search решает это: строит поисковый индекс и 
 | Веб-интерфейс, Swagger, CLI | ✅ | ✅ |
 | Расширение для 1С | ✅ | ✅ |
 | Семантический поиск по смыслу | — | ✅ |
-| Гибридный поиск (Tantivy + эмбеддинги) | — | ✅ |
+| Гибридный поиск | — | ✅ |
 | ONNX-модели (bge-m3, e5) | — | ✅ |
 | Кросс-коды и аналоги | — | ✅ |
 | Иерархические связи / BOM | — | ✅ |
@@ -87,8 +185,6 @@ SKU Search решает это: строит поисковый индекс и 
 | Фоновая индексация эмбеддингов | — | ✅ |
 
 Free закрывает 95 % задач по поиску дублей. PRO добавляет семантику, кросс-коды и аналитику.
-
-**PRO-лицензия:** 19 900 ₽ за 6 месяцев, продление — 9 000 ₽. Подробности на [sku-search.online/purchase](https://sku-search.online/purchase/).
 
 ---
 
@@ -98,12 +194,14 @@ Free закрывает 95 % задач по поиску дублей. PRO до
 
 [Последний релиз →](https://github.com/kadrjob/sku-free/releases/latest)
 
+Для публикации на Инфостарте используйте `sku-search-free-infostart-0.2.9.zip`.
+
 ### 2. Распакуйте и запустите
 
 **Linux / macOS:**
 
 ```bash
-unzip sku-search-free.zip -d sku-search-free
+unzip sku-search-free-0.2.9.zip -d sku-search-free
 cd sku-search-free
 ./setup.sh
 ./bin/linux/sku-service
@@ -112,7 +210,7 @@ cd sku-search-free
 **Windows:**
 
 ```powershell
-Expand-Archive -Path sku-search-free.zip -DestinationPath sku-search-free
+Expand-Archive -Path sku-search-free-0.2.9.zip -DestinationPath sku-search-free
 cd sku-search-free
 .\setup.cmd
 .\bin\windows\sku-service.exe
@@ -147,7 +245,8 @@ sku-search-free/
 ├── setup.sh                  # первичная настройка (Linux/macOS)
 ├── setup.cmd                 # первичная настройка (Windows)
 ├── data/
-│   └── demo-data.zip         # демо-каталог
+│   ├── demo-data.csv         # демо-каталог
+│   └── stopwords.txt         # стоп-слова для русского языка
 ├── 1c-extension/
 │   └── СКУПоиск.cfe          # расширение для 1С
 ├── docker/
@@ -191,7 +290,7 @@ sku-search-free/
 | Fuzzy по названию (2 слова) | ~16 мс |
 | Fuzzy с опечаткой | ~18 мс |
 
-Цифры — полный HTTP-цикл включая JSON и nginx.
+Цифры — полный HTTP-цикл включая JSON.
 
 ---
 
@@ -225,12 +324,9 @@ sku-search-free/
 
 SKU Search Free распространяется бесплатно и без ограничений по времени в рамках одной организации. См. [LICENSE.md](LICENSE.md).
 
-PRO-версия — коммерческая лицензия. Покупка и продление на сайте [sku-search.online](https://sku-search.online/purchase/).
-
 ---
 
 **Контакты**
 
-- Сайт: [https://sku-search.online](https://sku-search.online)
-- Поддержка: [https://sku-search.online/support/](https://sku-search.online/support/)
 - GitHub: [https://github.com/kadrjob/sku-free](https://github.com/kadrjob/sku-free)
+- Публикация на Инфостарте: [https://infostart.ru/1c/tools/sku-search-free/](https://infostart.ru/1c/tools/sku-search-free/)
