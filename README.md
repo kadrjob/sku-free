@@ -24,10 +24,9 @@ SKU Search — это поисковый микросервис рядом с 1�
 
 **👉 Скачать последний релиз:** [github.com/kadrjob/sku-free/releases/latest](https://github.com/kadrjob/sku-free/releases/latest)
 
-Архивы релиза `v0.2.9`:
+Архив релиза `v0.2.9`:
 
-- `sku-search-free-0.2.9.zip` — стандартная Free-версия.
-- `sku-search-free-infostart-0.2.9.zip` — сборка с Infostart-специфичными настройками интерфейса.
+- `sku-search-free-infostart-0.2.9.zip` — Free-версия со специфичными для публикации на Инфостарте настройками интерфейса.
 
 ---
 
@@ -194,14 +193,12 @@ Free закрывает 95 % задач по поиску дублей. PRO до
 
 [Последний релиз →](https://github.com/kadrjob/sku-free/releases/latest)
 
-Для публикации на Инфостарте используйте `sku-search-free-infostart-0.2.9.zip`.
-
 ### 2. Распакуйте и запустите
 
 **Linux / macOS:**
 
 ```bash
-unzip sku-search-free-0.2.9.zip -d sku-search-free
+unzip sku-search-free-infostart-0.2.9.zip -d sku-search-free
 cd sku-search-free
 ./setup.sh
 ./bin/linux/sku-service
@@ -210,7 +207,7 @@ cd sku-search-free
 **Windows:**
 
 ```powershell
-Expand-Archive -Path sku-search-free-0.2.9.zip -DestinationPath sku-search-free
+Expand-Archive -Path sku-search-free-infostart-0.2.9.zip -DestinationPath sku-search-free
 cd sku-search-free
 .\setup.cmd
 .\bin\windows\sku-service.exe
