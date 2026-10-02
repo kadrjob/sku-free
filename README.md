@@ -1,4 +1,4 @@
-<a href="https://infostart.ru/1c/tools/sku-search-free/" title="Публикация на Инфостарте">
+<a href="https://infostart.ru/1c/articles/2804048/" title="Публикация на Инфостарте">
   <img src="https://infostart.ru/bitrix/templates/sandbox_empty/assets/tpl/abo/img/logo.svg" alt="Infostart" height="32">
 </a>
 
@@ -326,4 +326,4 @@ SKU Search Free распространяется бесплатно и без о
 **Контакты**
 
 - GitHub: [https://github.com/kadrjob/sku-free](https://github.com/kadrjob/sku-free)
-- Публикация на Инфостарте: [https://infostart.ru/1c/tools/sku-search-free/](https://infostart.ru/1c/tools/sku-search-free/)
+- Публикация на Инфостарте: [https://infostart.ru/1c/tools/sku-search-free/](https://infostart.ru/1c/articles/2804048/)
