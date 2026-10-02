@@ -326,4 +326,4 @@ SKU Search Free распространяется бесплатно и без о
 **Контакты**
 
 - GitHub: [https://github.com/kadrjob/sku-free](https://github.com/kadrjob/sku-free)
-- Публикация на Инфостарте: [https://infostart.ru/1c/tools/sku-search-free/](https://infostart.ru/1c/articles/2804048/)
+- Публикация на Инфостарте: [https://infostart.ru/articles/2804048/](https://infostart.ru/1c/articles/2804048/)
