@@ -24,9 +24,11 @@ SKU Search — это поисковый микросервис рядом с 1�
 
 **👉 Скачать последний релиз:** [github.com/kadrjob/sku-free/releases/latest](https://github.com/kadrjob/sku-free/releases/latest)
 
-Архив релиза `v0.2.9`:
+Архив релиза `v0.3.0`:
 
-- `sku-search-free-infostart-0.2.9.zip` — Free-версия со специфичными для публикации на Инфостарте настройками интерфейса.
+- `sku-search-free-0.3.0.zip` — Free-версия для Linux и Windows.
+
+**Сайт проекта:** [sku-search.online](https://sku-search.online) — документация, ответы на вопросы и условия PRO.
 
 ---
 
@@ -182,8 +184,21 @@ SKU Search решает это: строит поисковый индекс и 
 | Иерархические связи / BOM | — | ✅ |
 | Аналитика запросов | — | ✅ |
 | Фоновая индексация эмбеддингов | — | ✅ |
+| Ускорение индексации на GPU | — | ✅ |
 
-Free закрывает 95 % задач по поиску дублей. PRO добавляет семантику, кросс-коды и аналитику.
+Free закрывает 95 % задач по поиску дублей. PRO добавляет семантику, кросс-коды, аналитику и GPU-индексацию.
+
+### Хотите больше?
+
+Если каталог большой, а искать нужно по смыслу — чтобы «молоко 3,2%» находило «Молоко пастеризованное 3.2», даже когда общих слов нет — это PRO.
+
+- **Семантический и гибридный поиск** на ONNX-моделях (bge-m3, e5).
+- **Индексация на GPU.** На Windows работает сразу через DirectML — на любой видеокарте, без установки CUDA. На Linux — через CUDA. Ускорение против CPU — **от 5 до 20 раз**, замеры ниже.
+- **Кросс-коды, аналоги, иерархия, аналитика** запросов.
+
+**Условия:** 25 000 ₽ — бессрочная лицензия и 6 месяцев обновлений. Когда подписка на обновления заканчивается, программа продолжает работать — продление не обязательно.
+
+👉 **[Условия и покупка PRO →](https://sku-search.online/purchase/)**
 
 ---
 
@@ -198,7 +213,7 @@ Free закрывает 95 % задач по поиску дублей. PRO до
 **Linux / macOS:**
 
 ```bash
-unzip sku-search-free-infostart-0.2.9.zip -d sku-search-free
+unzip sku-search-free-0.3.0.zip -d sku-search-free
 cd sku-search-free
 ./setup.sh
 ./bin/linux/sku-service
@@ -207,7 +222,7 @@ cd sku-search-free
 **Windows:**
 
 ```powershell
-Expand-Archive -Path sku-search-free-infostart-0.2.9.zip -DestinationPath sku-search-free
+Expand-Archive -Path sku-search-free-0.3.0.zip -DestinationPath sku-search-free
 cd sku-search-free
 .\setup.cmd
 .\bin\windows\sku-service.exe
@@ -249,6 +264,7 @@ sku-search-free/
 ├── docker/
 │   ├── Dockerfile
 │   └── docker-compose.yml
+├── examples/                 # unit-файл systemd и служба Windows
 ├── LICENSE.md
 └── README.md
 ```
@@ -278,6 +294,8 @@ sku-search-free/
 
 ## Честный бенчмарк
 
+### Free: скорость поиска
+
 Тестовая конфигурация: 50 000 позиций, удалённый ПК.
 
 | Тип поиска | Среднее |
@@ -288,6 +306,34 @@ sku-search-free/
 | Fuzzy с опечаткой | ~18 мс |
 
 Цифры — полный HTTP-цикл включая JSON.
+
+### Free: на разном железе
+
+| Стенд | Загрузка индекса | Отдача |
+|---|---|---|
+| Mac mini 2014 (i5, 8 ГБ) | 50 000 позиций за 39 с, индекс 3,4 МБ | 1,85 / 1,35 / 2,35 мс |
+| Ryzen 7 5700X | — | 242 QPS в рабочем режиме, 664 QPS после тюнинга |
+
+### PRO: индексация на GPU против CPU
+
+Замеры на реальном железе: Windows 10 22H2, видеокарта **NVIDIA RTX 3060 16 ГБ**, процессор **Intel Xeon E5-2699 v3 (18 ядер / 36 потоков)**, 64 ГБ RAM, ONNX Runtime 1.23.2. Каталог 10 000 позиций, 200 поисковых запросов.
+
+| Модель и режим | Время индексации | Скорость | Выигрыш GPU |
+|---|---|---|---|
+| e5-small, GPU (FP32, batch 256) | 16,9 с | ~592 вект./с | **≈ 5,3×** |
+| e5-small, CPU (INT8) | 90,5 с | ~110 вект./с | — |
+| bge-m3, GPU (FP16) | 38,7 с | ~258 вект./с | **≈ 20×** |
+| bge-m3, CPU (INT8) | 771,6 с | ~13 вект./с | — |
+
+Поиск после индексации — 103,7 мс, занятая видеопамять — 6,8 ГБ.
+
+Что показали замеры:
+
+- **FP16 вместо FP32 — решающая настройка.** У bge-m3 на GPU это 38,7 с против 871,3 с, то есть **≈ 22×**.
+- **Оптимальный `batch_size` — 256.** Дальнейшее увеличение не помогает: при 4096 время даже растёт (23,5 с против 16,9 с на e5-small).
+- **INT8 на GPU использовать нельзя.** В ONNX Runtime нет CUDA-ядер `MatMulInteger`, модель молча уходит на CPU и индексация замедляется в разы. Для GPU нужны FP16 или FP32.
+- **Windows — на любой видеокарте.** Сборка использует DirectML, отдельно ставить CUDA и cuDNN не требуется.
+- **Linux — через CUDA 12.x и cuDNN 9.** Ставить CUDA Toolkit целиком не нужно: достаточно библиотек из комплекта поставки.
 
 ---
 
@@ -315,6 +361,10 @@ sku-search-free/
 
 - По умолчанию `fuzzy_max_distance = 1`. Установите `2` для морфологических форм.
 
+**Чем PRO отличается от Free?**
+
+- PRO добавляет семантический поиск, кросс-коды, аналитику и ускорение на GPU. Подробнее — на [sku-search.online](https://sku-search.online).
+
 ---
 
 ## Лицензия
@@ -325,5 +375,8 @@ SKU Search Free распространяется бесплатно и без о
 
 **Контакты**
 
+- Сайт: [https://sku-search.online](https://sku-search.online)
+- Почта: support@sku-search.online
+- Telegram: [@kadrjob78job](https://t.me/kadrjob78job)
 - GitHub: [https://github.com/kadrjob/sku-free](https://github.com/kadrjob/sku-free)
 - Публикация на Инфостарте: [https://infostart.ru/articles/2804048/](https://infostart.ru/1c/articles/2804048/)
