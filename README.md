@@ -24,9 +24,9 @@ SKU Search — это поисковый микросервис рядом с 1�
 
 **👉 Скачать последний релиз:** [github.com/kadrjob/sku-free/releases/latest](https://github.com/kadrjob/sku-free/releases/latest)
 
-Архив релиза `v0.3.0`:
+Архив релиза `v0.3.1`:
 
-- `sku-search-free-0.3.0.zip` — Free-версия для Linux и Windows.
+- `sku-search-free-0.3.1.zip` — Free-версия для Linux и Windows.
 
 **Сайт проекта:** [sku-search.online](https://sku-search.online) — документация, ответы на вопросы и условия PRO.
 
@@ -213,7 +213,7 @@ Free закрывает 95 % задач по поиску дублей. PRO до
 **Linux / macOS:**
 
 ```bash
-unzip sku-search-free-0.3.0.zip -d sku-search-free
+unzip sku-search-free-0.3.1.zip -d sku-search-free
 cd sku-search-free
 ./setup.sh
 ./bin/linux/sku-service
@@ -222,7 +222,7 @@ cd sku-search-free
 **Windows:**
 
 ```powershell
-Expand-Archive -Path sku-search-free-0.3.0.zip -DestinationPath sku-search-free
+Expand-Archive -Path sku-search-free-0.3.1.zip -DestinationPath sku-search-free
 cd sku-search-free
 .\setup.cmd
 .\bin\windows\sku-service.exe
